@@ -27,7 +27,8 @@ export const Config = {
   enableManualMigrations: envBool('ENABLE_MANUAL_MIGRATIONS', false),
   trustProxy: envBool('TRUST_PROXY', false),
   env: envString('NODE_ENV', 'development'),
-  cardServicePort: envInt('CARD_SERVICE_PORT', 3007)
+  cardServicePort: envInt('CARD_SERVICE_PORT', 3007),
+  paymentTimeout: envInt('PAYMENT_TIMEOUT', 30000)
 }
 
 export type IAppConfig = typeof Config

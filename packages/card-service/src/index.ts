@@ -4,6 +4,10 @@ import { Ioc, IocContract } from '@adonisjs/fold'
 import createLogger from 'pino'
 import { knex } from 'knex'
 import { Model } from 'objection'
+import { createPaymentService } from './payment/service'
+import { createPaymentRoutes } from './payment/routes'
+import { createOpenAPI } from '@interledger/openapi'
+import path from 'path'
 
 export function initIocContainer(
   config: typeof Config
@@ -57,6 +61,36 @@ export function initIocContainer(
     }
     return db
   })
+
+  container.singleton('openApi', async () => {
+    const cardServerSpec = await createOpenAPI(
+      path.resolve(__dirname, './openapi/specs/card-server.yaml')
+    )
+
+    return {
+      cardServerSpec
+    }
+  })
+
+  container.singleton(
+    'paymentService',
+    async (deps: IocContract<AppServices>) => {
+      return createPaymentService({
+        logger: await deps.use('logger'),
+        config: await deps.use('config')
+      })
+    }
+  )
+
+  container.singleton(
+    'paymentRoutes',
+    async (deps: IocContract<AppServices>) => {
+      return createPaymentRoutes({
+        logger: await deps.use('logger'),
+        paymentService: await deps.use('paymentService')
+      })
+    }
+  )
 
   return container
 }
