@@ -1,0 +1,17 @@
+meta {
+  name: Create new Merchant
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{PosService}}/merchants
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "Test Merchant"
+  }
+}
