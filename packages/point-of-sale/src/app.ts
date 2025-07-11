@@ -7,13 +7,26 @@ import Koa, { DefaultState } from 'koa'
 import Router from '@koa/router'
 import bodyParser from 'koa-bodyparser'
 import cors from '@koa/cors'
-import { CreateMerchantContext, MerchantRoutes } from './merchant/routes'
+import {
+  CreateMerchantContext,
+  DeleteMerchantContext,
+  MerchantRoutes
+} from './merchant/routes'
+import {
+  PosDeviceRoutes,
+  RegisterDeviceContext
+} from './merchant/devices/routes'
+import { PosDeviceService } from './merchant/devices/service'
+import { MerchantService } from './merchant/service'
 
 export interface AppServices {
   logger: Promise<Logger>
   knex: Promise<Knex>
   config: Promise<IAppConfig>
   merchantRoutes: Promise<MerchantRoutes>
+  posDeviceRoutes: Promise<PosDeviceRoutes>
+  posDeviceService: Promise<PosDeviceService>
+  merchantService: Promise<MerchantService>
 }
 
 export type AppContainer = IocContract<AppServices>
@@ -57,12 +70,27 @@ export class App {
     })
 
     const merchantRoutes = await this.container.use('merchantRoutes')
+    const posDeviceRoutes = await this.container.use('posDeviceRoutes')
 
     // POST /merchants
     // Create merchant
     router.post<DefaultState, CreateMerchantContext>(
       '/merchants',
       merchantRoutes.create
+    )
+
+    // DELETE /merchants/:merchantId
+    // Delete merchant
+    router.delete<DefaultState, DeleteMerchantContext>(
+      '/merchants/:merchantId',
+      merchantRoutes.delete
+    )
+
+    // POST /merchant/:merchantId/devices
+    // Register a device
+    router.post<DefaultState, RegisterDeviceContext>(
+      '/merchants/:merchantId/devices',
+      posDeviceRoutes.register
     )
 
     koa.use(cors())
@@ -105,7 +133,7 @@ export class App {
     })
 
     koa.context.container = this.container
-    koa.context.logger = await this.container.use('logger')
+    koa.context.logger = this.logger
 
     koa.use(
       async (
